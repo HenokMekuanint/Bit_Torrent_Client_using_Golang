@@ -44,36 +44,32 @@ const (
 )
 
 type dnsseeder struct {
-	id        wire.BitcoinNet  // Magic number - Unique ID for this network. Sent in header of all messages
-	theList   map[string]*node // the list of current nodes
-	mtx       sync.RWMutex     // protect thelist
-	dnsHost   string           // dns host we will serve results for this domain
-	name      string           // Short name for the network
-	desc      string           // Long description for the network
-	initialIP string           // Initial ip address to connect to and ask for addresses if we have no seeders
-	seeders   []string         // slice of seeders to pull ip addresses when starting this seeder
-	maxStart  []uint32         // max number of goroutines to start each run for each status type
-	delay     []int64          // number of seconds to wait before we connect to a known client for each status
-	counts    NodeCounts       // structure to hold stats for this seeder
-	pver      uint32           // minimum block height for the seeder
-	ttl       uint32           // DNS TTL to use for this seeder
-	maxSize   int              // max number of clients before we start restricting new entries
-	port      uint16           // default network port this seeder uses
+	id        wire.BitcoinNet  
+	theList   map[string]*node 
+	mtx       sync.RWMutex     
+	dnsHost   string           
+	name      string           
+	desc      string           
+	initialIP string           
+	seeders   []string         
+	maxStart  []uint32         
+	counts    NodeCounts       
+	pver      uint32           
+	ttl       uint32          
+	maxSize   int              
+	port      uint16           
 }
 
 type result struct {
-	nas        []*wire.NetAddress // slice of node addresses returned from a node
-	msg        *crawlError        // error string or nil if no problems
-	node       string             // theList key to the node that was crawled
-	version    int32              // remote node protocol version
-	services   wire.ServiceFlag   // remote client supported services
-	lastBlock  int32              // last block seen by the node
-	strVersion string             // remote client user agent
+	nas        []*wire.NetAddress 
+	msg        *crawlError        
+	node       string             
+	version    int32              
+	services   wire.ServiceFlag   
+	lastBlock  int32              
+	strVersion string             
 }
 
-// initCrawlers needs to be run before the startCrawlers so it can get
-// a list of current ip addresses from the other seeders and therefore
-// start the crawl process
 func (s *dnsseeder) initSeeder() {
 
 	// range over existing seeders for the network and get starting ip addresses from them
