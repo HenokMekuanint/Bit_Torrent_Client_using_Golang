@@ -1,3 +1,5 @@
+// handshake.go
+
 package handshake
 
 import (
@@ -5,55 +7,58 @@ import (
 	"io"
 )
 
-type Handshake struct {
-	Pstr     string
+// Handshake represents a handshake message between peers
+type TCPHandshake struct {
+	Protocol string
 	InfoHash [20]byte
 	PeerID   [20]byte
 }
 
-//the handshake code in the blog is pretty well written, I've copied the implementation almost entirely
-func (h *Handshake) Serialize() []byte {
-	buf := make([]byte, len(h.Pstr)+49)
-	buf[0] = byte(len(h.Pstr))
+// Serialize serializes a handshake message into bytes
+func (h *TCPHandshake) Serialize() []byte {
+	buf := make([]byte, len(h.Protocol)+49)
+	buf[0] = byte(len(h.Protocol))
 	curr := 1
-	curr += copy(buf[curr:], h.Pstr)
+	curr += copy(buf[curr:], h.Protocol)
 	curr += copy(buf[curr:], make([]byte, 8)) // 8 reserved bytes
 	curr += copy(buf[curr:], h.InfoHash[:])
 	curr += copy(buf[curr:], h.PeerID[:])
 	return buf
 }
 
-func Read(r io.Reader) (*Handshake, error) {
-	lengthBuf := make([]byte, 1)
-	_, err := io.ReadFull(r, lengthBuf)
+// Read reads a handshake message from an io.Reader
+func ReadHandshake(r io.Reader) (*TCPHandshake, error) {
+	// Read the protocol length
+	protocolLenBuf := make([]byte, 1)
+	_, err := io.ReadFull(r, protocolLenBuf)
 	if err != nil {
 		return nil, err
 	}
-	pstrlen := int(lengthBuf[0])
+	protocolLen := int(protocolLenBuf[0])
 
-	if pstrlen == 0 {
-		err := fmt.Errorf("pstrlen cannot be 0")
-		return nil, err
+	if protocolLen == 0 {
+		return nil, fmt.Errorf("protocol length cannot be 0")
 	}
 
-	handshakeBuf := make([]byte, 48+pstrlen)
+	// Read the rest of the handshake message
+	handshakeBuf := make([]byte, 48+protocolLen)
 	_, err = io.ReadFull(r, handshakeBuf)
 	if err != nil {
 		return nil, err
 	}
 
+	// Parse the handshake message
 	var infoHash, peerID [20]byte
+	copy(infoHash[:], handshakeBuf[protocolLen+8:protocolLen+8+20])
+	copy(peerID[:], handshakeBuf[protocolLen+8+20:])
 
-	copy(infoHash[:], handshakeBuf[pstrlen+8:pstrlen+8+20])
-	copy(peerID[:], handshakeBuf[pstrlen+8+20:])
-
-	h := Handshake{
-		Pstr:     string(handshakeBuf[0:pstrlen]),
+	h := TCPHandshake{
+		Protocol: string(handshakeBuf[0:protocolLen]),
 		InfoHash: infoHash,
 		PeerID:   peerID,
 	}
 
-	fmt.Println(h)
-
 	return &h, nil
 }
+
+
