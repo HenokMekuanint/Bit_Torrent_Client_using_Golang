@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/tech-yush/bittorent-client/bencode"
+	"bittorent-client/bencode"
 	
 )
 
