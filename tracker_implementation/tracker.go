@@ -3,6 +3,7 @@ package bencode
 import (
 	"crypto/rand"
 	"fmt"
+	
 	"net/http"
 	"net/url"
 	"strconv"
@@ -15,11 +16,16 @@ type bencodeResp struct {
 	Peers    string `bencode:"peers"`
 }
 
+const (
+	DefaultPort = 6889
+)
+
 func (tf *TorrentFile) BuildTrackerURL(peerID [20]byte, port uint16) (string, error) {
 	base, err := url.Parse(tf.Announce)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to parse announce URL: %w", err)
 	}
+
 	queryParams := url.Values{
 		"info_hash":  []string{string(tf.InfoHash[:])},
 		"peer_id":    []string{string(peerID[:])},
@@ -29,6 +35,7 @@ func (tf *TorrentFile) BuildTrackerURL(peerID [20]byte, port uint16) (string, er
 		"compact":    []string{"1"},
 		"left":       []string{strconv.Itoa(tf.Length)},
 	}
+
 	base.RawQuery = queryParams.Encode()
 	return base.String(), nil
 }
@@ -36,14 +43,27 @@ func (tf *TorrentFile) BuildTrackerURL(peerID [20]byte, port uint16) (string, er
 func ParseResp(tf TorrentFile) (bencodeResp, error) {
 	var peerID [20]byte
 	_, _ = rand.Read(peerID[:])
-	//Ports reserved for BitTorrent are typically 6881-6889
-	url, _ := tf.BuildTrackerURL(peerID, 6889)
-	resp, err := http.Get(url)
+
+	url, err := tf.BuildTrackerURL(peerID, DefaultPort)
 	if err != nil {
-		fmt.Println("get request failed")
-		return bencodeResp{}, err
+		return bencodeResp{}, fmt.Errorf("failed to build tracker URL: %w", err)
+	}
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return bencodeResp{}, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return bencodeResp{}, fmt.Errorf("failed to perform HTTP request: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return bencodeResp{}, fmt.Errorf("unexpected HTTP status code: %d", resp.StatusCode)
+	}
 
 	pb := bencodeResp{}
 	err = bencode.Unmarshal(resp.Body, &pb)
