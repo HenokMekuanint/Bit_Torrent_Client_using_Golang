@@ -1,10 +1,6 @@
-Addis Ababa Institute of Technology
-School of Information Technology and Engineering
-Department of Software Engineering
-Distributed System Programming
-BitTorrent Implementation Using Golang
 
-          					Team Members
+
+          Team Members
 Name                  ID                         Section
 Temesgen Zewude  	UGR/3848/12                         2
 Henok Mekuanint    	UGR/2272/12                         2
