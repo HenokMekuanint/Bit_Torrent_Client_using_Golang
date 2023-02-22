@@ -12,7 +12,8 @@ import (
 	"github.com/tech-yush/bittorent-client/peers"
 )
 
-type TCP struct {
+type Connection struct {
+
 	Conn     net.Conn
 	Choked   bool
 	Bitfield bitfield.Bitfield
@@ -21,13 +22,13 @@ type TCP struct {
 	peerID   [20]byte
 }
 
-func completeHandshake(conn net.Conn, infohash, peerID [20]byte) (*handshake.Handshake, error) {
+func completeHandshake(conn net.Conn, infoHash, peerID [20]byte) (*handshake.Handshake, error) {
 	conn.SetDeadline(time.Now().Add(3 * time.Second))
 	defer conn.SetDeadline(time.Time{})
 
 	req := handshake.Handshake{
-		Pstr:     "BitTorrent protocol",
-		InfoHash: infohash,
+		Pstr:     "BitTorrent Protocol",
+		InfoHash: infoHash,
 		PeerID:   peerID,
 	}
 	_, err := conn.Write(req.Serialize())
@@ -39,15 +40,15 @@ func completeHandshake(conn net.Conn, infohash, peerID [20]byte) (*handshake.Han
 	if err != nil {
 		return nil, err
 	}
-	if !bytes.Equal(res.InfoHash[:], infohash[:]) {
-		return nil, fmt.Errorf("expected infohash %x but got %x", res.InfoHash, infohash)
+	if !bytes.Equal(res.InfoHash[:], infoHash[:]) {
+		return nil, fmt.Errorf("expected infohash %x but got %x", res.InfoHash, infoHash)
 	}
 	return res, nil
 }
 
-func recvBitfield(conn net.Conn) (bitfield.Bitfield, error) {
+func receiveBitfield(conn net.Conn) (bitfield.Bitfield, error) {
 	conn.SetDeadline(time.Now().Add(5 * time.Second))
-	defer conn.SetDeadline(time.Time{}) // Disable the deadline
+	defer conn.SetDeadline(time.Time{})
 
 	msg, err := message.Read(conn)
 	if err != nil {
@@ -61,7 +62,7 @@ func recvBitfield(conn net.Conn) (bitfield.Bitfield, error) {
 	return msg.Payload, nil
 }
 
-func New(peer peers.Peer, peerID, infoHash [20]byte) (*TCP, error) {
+func NewConnection(peer peers.Peer, peerID, infoHash [20]byte) (*Connection, error) {
 	conn, err := net.DialTimeout("tcp", peer.String(), 3*time.Second)
 	if err != nil {
 		return nil, err
@@ -73,13 +74,13 @@ func New(peer peers.Peer, peerID, infoHash [20]byte) (*TCP, error) {
 		return nil, err
 	}
 
-	bf, err := recvBitfield(conn)
+	bf, err := receiveBitfield(conn)
 	if err != nil {
 		conn.Close()
 		return nil, err
 	}
 
-	return &TCP{
+	return &Connection{
 		Conn:     conn,
 		Choked:   true,
 		Bitfield: bf,
@@ -89,36 +90,36 @@ func New(peer peers.Peer, peerID, infoHash [20]byte) (*TCP, error) {
 	}, nil
 }
 
-func (t *TCP) Read() (*message.Message, error) {
-	msg, err := message.Read(t.Conn)
+func (c *Connection) ReadMessage() (*message.Message, error) {
+	msg, err := message.Read(c.Conn)
 	return msg, err
 }
 
-func (t *TCP) SendRequest(index, begin, length int) error {
+func (c *Connection) SendRequest(index, begin, length int) error {
 	req := message.FormatRequest(index, begin, length)
-	_, err := t.Conn.Write(req.Serialize())
+	_, err := c.Conn.Write(req.Serialize())
 	return err
 }
 
-func (t *TCP) SendInterested() error {
+func (c *Connection) SendInterested() error {
 	msg := message.Message{ID: message.MsgInterested}
-	_, err := t.Conn.Write(msg.Serialize())
+	_, err := c.Conn.Write(msg.Serialize())
 	return err
 }
 
-func (t *TCP) SendNotInterested() error {
+func (c *Connection) SendNotInterested() error {
 	msg := message.Message{ID: message.MsgNotInterested}
-	_, err := t.Conn.Write(msg.Serialize())
+	_, err := c.Conn.Write(msg.Serialize())
 	return err
 }
 
-func (t *TCP) SendUnchoke() error {
+func (c *Connection) SendUnchoke() error {
 	msg := message.Message{ID: message.MsgUnchoke}
-	_, err := t.Conn.Write(msg.Serialize())
+	_, err := c.Conn.Write(msg.Serialize())
 	return err
 }
 
-func (t *TCP) SendHave(index int) error {
+func (t *Connection) SendHave(index int) error {
 	msg := message.FormatHave(index)
 	_, err := t.Conn.Write(msg.Serialize())
 	return err
