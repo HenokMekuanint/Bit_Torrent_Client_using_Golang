@@ -3,7 +3,7 @@ package bencode
 import (
 	"crypto/rand"
 	"fmt"
-	
+
 	"net/http"
 	"net/url"
 	"strconv"

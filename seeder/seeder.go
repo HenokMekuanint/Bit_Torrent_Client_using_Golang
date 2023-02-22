@@ -8,66 +8,63 @@ import (
 	"sync"
 	"time"
 
-	"btcd/wire"
+	"github.com/btcsuite/btcd/wire"
 )
 
 const (
-
-
 	nounce  = 0x0539a019ca550825
 	minPort = 0
 	maxPort = 65535
 
-	crawlDelay = 22 
-	auditDelay = 22 
-	dnsDelay   = 57 
-	maxFails = 58 
-	maxTo = 250 
+	crawlDelay = 22
+	auditDelay = 22
+	dnsDelay   = 57
+	maxFails   = 58
+	maxTo      = 250
 )
 
 const (
-	dnsInvalid  = iota 
-	dnsV4Std           
-	dnsV4Non           
-	dnsV6Std           
-	dnsV6Non           
-	maxDNSTypes        
+	dnsInvalid = iota
+	dnsV4Std
+	dnsV4Non
+	dnsV6Std
+	dnsV6Non
+	maxDNSTypes
 )
 
 const (
-	
-	statusRG       = iota 
-	statusCG              
-	statusWG              
-	statusNG              
-	maxStatusTypes       
+	statusRG = iota
+	statusCG
+	statusWG
+	statusNG
+	maxStatusTypes
 )
 
 type dnsseeder struct {
-	id        wire.BitcoinNet  
-	theList   map[string]*node 
-	mtx       sync.RWMutex     
-	dnsHost   string           
-	name      string           
-	desc      string           
-	initialIP string           
-	seeders   []string         
-	maxStart  []uint32         
-	counts    NodeCounts       
-	pver      uint32           
-	ttl       uint32          
-	maxSize   int              
-	port      uint16           
+	id        wire.BitcoinNet
+	theList   map[string]*node
+	mtx       sync.RWMutex
+	dnsHost   string
+	name      string
+	desc      string
+	initialIP string
+	seeders   []string
+	maxStart  []uint32
+	counts    NodeCounts
+	pver      uint32
+	ttl       uint32
+	maxSize   int
+	port      uint16
 }
 
 type result struct {
-	nas        []*wire.NetAddress 
-	msg        *crawlError        
-	node       string             
-	version    int32              
-	services   wire.ServiceFlag   
-	lastBlock  int32              
-	strVersion string             
+	nas        []*wire.NetAddress
+	msg        *crawlError
+	node       string
+	version    int32
+	services   wire.ServiceFlag
+	lastBlock  int32
+	strVersion string
 }
 
 func (s *dnsseeder) initSeeder() {
@@ -143,9 +140,8 @@ func (s *dnsseeder) runSeeder(done <-chan struct{}, wg *sync.WaitGroup) {
 		}
 	}
 	fmt.Printf("shutting down seeder: %s\n", s.name)
-	
-}
 
+}
 
 func (s *dnsseeder) startCrawlers(resultsChan chan *result) {
 
@@ -162,7 +158,6 @@ func (s *dnsseeder) startCrawlers(resultsChan chan *result) {
 
 	started := make([]uint32, maxStatusTypes)
 	totals := make([]uint32, maxStatusTypes)
-
 
 	for _, nd := range s.theList {
 
@@ -215,7 +210,7 @@ func (s *dnsseeder) processResult(r *result) {
 		switch nd.status {
 		case statusRG:
 			if len(s.theList) > s.maxSize {
-				nd.status = statusNG 
+				nd.status = statusNG
 			} else {
 				if nd.rating += 25; nd.rating > 30 {
 					nd.status = statusWG
@@ -227,10 +222,10 @@ func (s *dnsseeder) processResult(r *result) {
 			}
 		case statusWG:
 			if nd.rating += 15; nd.rating >= 100 {
-				nd.status = statusNG 
+				nd.status = statusNG
 			}
 		}
-		
+
 		if config.verbose {
 			log.Printf("%s: failed crawl node: %s s:r:f: %v:%v:%v %s\n",
 				s.name,
@@ -304,7 +299,6 @@ func (s *dnsseeder) addNa(nNa *wire.NetAddress) bool {
 		return false
 	}
 
-	
 	if (time.Now().Add(-(time.Hour * 24))).After(nNa.Timestamp) {
 		return false
 	}
@@ -341,7 +335,6 @@ func (s *dnsseeder) addNa(nNa *wire.NetAddress) bool {
 	return true
 }
 
-
 func getNonStdIP(rip net.IP, port uint16) net.IP {
 
 	b := []byte{0x0, 0x0, 0x0, 0x0}
@@ -375,7 +368,6 @@ func (s *dnsseeder) auditNodes() {
 
 	c := 0
 
-
 	iAmFull := len(s.theList) > s.maxSize
 
 	cgGoal := int(float64(float64(s.delay[statusCG]/crawlDelay)*float64(s.maxStart[statusCG])) * 0.75)
@@ -406,7 +398,7 @@ func (s *dnsseeder) auditNodes() {
 			}
 
 			c++
-			
+
 			s.theList[k] = nil
 			delete(s.theList, k)
 		}
@@ -417,7 +409,7 @@ func (s *dnsseeder) auditNodes() {
 			}
 
 			c++
-			
+
 			s.theList[k] = nil
 			delete(s.theList, k)
 		}
@@ -429,7 +421,7 @@ func (s *dnsseeder) auditNodes() {
 				}
 
 				c++
-				
+
 				s.theList[k] = nil
 				delete(s.theList, k)
 			}
@@ -466,4 +458,3 @@ func Check_Duplicate_Seeder(s *dnsseeder) (bool, error) {
 	}
 	return false, nil
 }
-

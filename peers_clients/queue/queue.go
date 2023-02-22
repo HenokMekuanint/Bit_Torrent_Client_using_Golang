@@ -1,6 +1,8 @@
 package queue
 
 import (
+	peers "Bit_Torrent_Client_using_Golang/peers_clients"
+	message "Bit_Torrent_Client_using_Golang/peers_clients/peers_message"
 	"bytes"
 	"crypto/sha1"
 	"fmt"
@@ -8,8 +10,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/tech-yush/bittorent-client/message"
-	"github.com/tech-yush/bittorent-client/peers"
 	"github.com/tech-yush/bittorent-client/tcp"
 )
 

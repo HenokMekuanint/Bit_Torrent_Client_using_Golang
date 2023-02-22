@@ -1,15 +1,15 @@
 package bencode
 
 import (
+	peers "Bit_Torrent_Client_using_Golang/peers_clients"
+	"Bit_Torrent_Client_using_Golang/peers_clients/queue"
 	"bytes"
 	"crypto/rand"
 	"crypto/sha1"
 	"fmt"
 	"os"
 
-	"github.com/jackpal/bencode-go"
-	"github.com/tech-yush/bittorent-client/peers"
-	"github.com/tech-yush/bittorent-client/queue"
+	"github.com/tech-yush/bittorent-client/bencode"
 )
 
 //I will be using github.com/jackpal/bencode-go to parse the .torrent file
@@ -42,6 +42,7 @@ func (t *TorrentFile) DownloadToFile(path string) error {
 	_, err := rand.Read(peerID[:])
 	if err != nil {
 		return err
+
 	}
 
 	//The code differs from the actual repo because I've implemented SeperatePeers() in a diff way

@@ -4,8 +4,7 @@ import (
 	"log"
 	"os"
 
-	"bittorent-client/bencode"
-	
+	"github.com/tech-yush/bittorent-client/bencode"
 )
 
 func main() {
@@ -14,6 +13,7 @@ func main() {
 
 	torrentfile, err := bencode.Open(inPath)
 	if err != nil {
+
 		log.Fatal(err)
 	}
 

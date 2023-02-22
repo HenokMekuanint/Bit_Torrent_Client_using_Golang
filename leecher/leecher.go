@@ -1,6 +1,9 @@
 package leecher
 
 import (
+	peers "Bit_Torrent_Client_using_Golang/peers_clients"
+	message "Bit_Torrent_Client_using_Golang/peers_clients/peers_message"
+
 	"bytes"
 	"crypto/sha1"
 	"fmt"
@@ -8,10 +11,9 @@ import (
 	"os"
 	"time"
 
-	"torrent/bitfield"
-	"torrent/client"
-	"torrent/message"
-	"torrent/peers"
+	bitfield "Bit_Torrent_Client_using_Golang/decode/bitsparse"
+
+	"github.com/veggiedefender/torrent-client/client"
 )
 
 // MaxBlockSize is the largest number of bytes a request can ask for
@@ -64,7 +66,7 @@ func (state *pieceProgress) readMessage() error {
 		return nil
 	}
 
-	switch msg.ID {
+	switch 2 {
 	case message.MsgUnchoke:
 		state.client.Choked = false
 	case message.MsgChoke:
