@@ -12,7 +12,7 @@ type Peer struct {
 	Port uint16
 }
 
-func SeparatePeers(peersResp []byte) ([]Peer, error) {
+func differentiatePeers(peersResp []byte) ([]Peer, error) {
 	const peerSize = 6 // 4 for IP, 2 for port
 	numPeers := len(peersResp) / peerSize
 	if len(peersResp)%peerSize != 0 {
