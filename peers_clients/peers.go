@@ -13,17 +13,17 @@ type Peer struct {
 }
 
 func differentiatePeers(peersResp []byte) ([]Peer, error) {
-	const peerSize = 6 // 4 for IP, 2 for port
+	const peerSize = 6 
 	numPeers := len(peersResp) / peerSize
 	if len(peersResp)%peerSize != 0 {
 		err := fmt.Errorf("peers len err")
 		return nil, err
 	}
 	peers := make([]Peer, numPeers)
-	for i := 0; i < numPeers; i++ {
-		offset := i * peerSize
-		peers[i].IP = net.IP(peersResp[offset : offset+4])
-		peers[i].Port = binary.BigEndian.Uint16(peersResp[offset+4 : offset+6])
+	for current_peer := 0; current_peer < numPeers; current_peer++ {
+		offset := current_peer * peerSize
+		peers[current_peer].IP = net.IP(peersResp[offset : offset+4])
+		peers[current_peer].Port = binary.BigEndian.Uint16(peersResp[offset+4 : offset+6])
 	}
 	return peers, nil
 }
